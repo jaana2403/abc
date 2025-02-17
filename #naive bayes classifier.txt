@@ -1,0 +1,42 @@
+#naive bayes classifier
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
+
+def fit_naive_bayes(X, y):
+    classes = np.unique(y)
+    mean = np.array([X[y == c].mean(axis=0) for c in classes])
+    var = np.array([X[y == c].var(axis=0) for c in classes])
+    priors = np.array([X[y == c].shape[0] / len(y) for c in classes])
+    return classes, mean, var, priors
+
+def predict_naive_bayes(X, classes, mean, var, priors):
+    def _pdf(class_idx, x):
+        return np.exp(- (x - mean[class_idx])**2 / (2 * var[class_idx])) / np.sqrt(2 * np.pi * var[class_idx])
+    
+    def _predict(x):
+        posteriors = [np.log(priors[idx]) + np.sum(np.log(_pdf(idx, x))) for idx in range(len(classes))]
+        return classes[np.argmax(posteriors)]
+    
+    return np.array([_predict(x) for x in X])
+
+# Load dataset
+iris = load_iris()
+X, y = iris.data, iris.target
+class_names = iris.target_names
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+# Train and predict
+classes, mean, var, priors = fit_naive_bayes(X_train, y_train)
+y_pred = predict_naive_bayes(X_test, classes, mean, var, priors)
+
+# Display results
+print('Accuracy: %.4f' % np.mean(y_pred == y_test))
+print("Predictions:", iris.target_names[y_pred])
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=class_names))

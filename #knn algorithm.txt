@@ -1,0 +1,40 @@
+#knn algorithm
+import numpy as np
+from collections import Counter
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Load dataset
+iris = load_iris()
+X, y = iris.data, iris.target
+class_names = iris.target_names
+
+# Split into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+def euclidean_distance(x1, x2):
+    return np.linalg.norm(x1 - x2)
+
+def predict(X_train, y_train, X_test, k=3):
+    y_pred = []
+    for x in X_test:
+        distances = [euclidean_distance(x, x_train) for x_train in X_train]
+        k_indices = np.argsort(distances)[:k]
+        k_nearest_labels = [y_train[i] for i in k_indices]
+        most_common = Counter(k_nearest_labels).most_common(1)[0][0]
+        y_pred.append(most_common)
+    return np.array(y_pred)
+
+# Make predictions
+y_pred = predict(X_train, y_train, X_test, k=3)
+
+# Print accuracy
+print("Accuracy: %.4f" % np.mean(y_pred == y_test))
+print("Predictions:", class_names[y_pred])
+
+# Print confusion matrix and classification report
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))

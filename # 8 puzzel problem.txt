@@ -1,0 +1,54 @@
+# 8 puzzel problem
+import numpy as np
+from queue import PriorityQueue
+
+def get_moves(state):
+    moves, zero = [], np.where(state == 0)
+    for d in [(0,-1), (0,1), (-1,0), (1,0)]:
+        new_pos = zero[0] + d[0], zero[1] + d[1]
+        if 0 <= new_pos[0] < 3 and 0 <= new_pos[1] < 3:
+            new_state = state.copy()
+            new_state[zero], new_state[new_pos] = new_state[new_pos], new_state[zero]
+            moves.append(new_state)
+    return moves
+
+def heuristic(state, goal):
+    return np.count_nonzero(state != goal)
+
+def solve_puzzle(initial, goal):
+    queue, visited = PriorityQueue(), set()
+    queue.put((0, (initial.tolist(), None)))  # Convert to list
+
+    while not queue.empty():
+        _, (current, parent) = queue.get()
+        current = np.array(current)  # Convert back to NumPy array
+
+        if np.array_equal(current, goal):
+            return current, parent
+
+        for move in get_moves(current):
+            move_tuple = tuple(map(tuple, move))  # Convert to tuple for hashing
+            if move_tuple not in visited:
+                visited.add(move_tuple)
+                queue.put((heuristic(move, goal), (move.tolist(), (current.tolist(), parent))))
+    
+    return None, None
+
+
+def print_solution(solution):
+    if solution[0] is None:
+        print("No solution found.")
+        return
+    moves, move_count = [], -1
+    while solution:
+        moves.append(solution[0])
+        solution = solution[1]
+    for move in reversed(moves):
+        move_count += 1
+        print(move)
+    print("No. of moves:", move_count)
+
+initial = np.array([[2,8,1],[0,4,3],[7,6,5]])
+goal = np.array([[1,2,3],[8,0,4],[7,6,5]])
+solution = solve_puzzle(initial, goal)
+print_solution(solution) 
